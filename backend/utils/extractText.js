@@ -1,13 +1,12 @@
 import mammoth from 'mammoth';
 
-export default async function extractText(fileBuffer, mimetype) {
+export default async function extractText(buffer, mimetype) {
   if (mimetype === 'application/pdf') {
-    // Dynamic import to avoid loading test assets
     const { default: pdfParse } = await import('pdf-parse/lib/pdf-parse.js');
-    const data = await pdfParse(fileBuffer);
+    const data = await pdfParse(buffer);
     return data.text;
   } else {
-    const result = await mammoth.extractRawText({ buffer: fileBuffer });
+    const result = await mammoth.extractRawText({ buffer });
     return result.value;
   }
 }
