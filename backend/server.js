@@ -1,27 +1,29 @@
 import express from 'express';
 import cors from 'cors';
-import multer from 'multer';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import 'express-async-errors';
 import dotenv from 'dotenv';
-
-import extractRoute from './routes/extract.js';
-import processRoute from './routes/process.js';
-import exportRoute from './routes/export.js';
+import routes from './routes/index.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { validateEnv } from './middleware/validateEnv.js';
+import { logger } from './logger.js';
 
 dotenv.config();
+validateEnv();
+
 const app = express();
+app.use(helmet());
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('combined', { stream: logger.stream }));
 
-const upload = multer();
+app.get('/', (req, res) => res.send('Law Summarizer Backend OK'));
 
-// 1) Extrair texto (PDF/DOCX ou URL)
-app.post('/api/extract', upload.single('file'), extractRoute);
+app.use('/api', routes);
 
-// 2) Processar com IA
-app.post('/api/process', processRoute);
-
-// 3) Exportar PDF formatado
-app.post('/api/export', exportRoute);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3333;
-app.listen(PORT, () => console.log(`Server rodando na porta ${PORT}`));
+app.listen(PORT, () => logger.info(`Server listening on port ${PORT}`));
